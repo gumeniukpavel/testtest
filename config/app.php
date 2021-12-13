@@ -14,9 +14,9 @@ return [
     */
 
     'name' => env('APP_NAME', 'Laravel'),
-    'api_key' => env('API_KEY', 'RN42O4ntxJJen8GBixIf5BGCMPwwie'),
-    'api_url' => env('API_URL', 'https://api5.cargo.guru'),
-    'main_api_url' => env('API_URL', 'https://cargo.guru'),
+    'api_key' => env('API_KEY', ''),
+    'api_url' => env('API_URL', ''),
+    'main_api_url' => env('API_URL', ''),
 
     /*
     |--------------------------------------------------------------------------
