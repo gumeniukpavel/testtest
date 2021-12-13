@@ -1,0 +1,49 @@
+# PHP
+# Test and package your PHP project.
+# Add steps that run tests, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/php
+
+trigger:
+  - master
+  - dev
+
+pool: default
+
+variables:
+  phpVersion: 7.4
+
+steps:
+  - script: |
+      sudo update-alternatives --set php /usr/bin/php$(phpVersion)
+      sudo update-alternatives --set phar /usr/bin/phar$(phpVersion)
+      sudo update-alternatives --set phpdbg /usr/bin/phpdbg$(phpVersion)
+      sudo update-alternatives --set php-cgi /usr/bin/php-cgi$(phpVersion)
+      sudo update-alternatives --set phar.phar /usr/bin/phar.phar$(phpVersion)
+      php -version
+    displayName: 'Use PHP version $(phpVersion)'
+
+  - script: |
+      sudo mysql -hmysql-8 -uroot -proot -e "set global sql_mode='';"
+      sudo mysql -hmysql-8 -uroot -proot -e "DROP DATABASE IF EXISTS cargo_guru;"
+      sudo mysql -hmysql-8 -uroot -proot -e "CREATE DATABASE cargo_guru;"
+    displayName: 'Create databases'
+
+  - script: cp .env.azure-pipelines .env
+    displayName: 'Copy .env'
+
+  - script: |
+      export COMPOSER_HOME="$HOME/.config/composer"
+      composer install --no-interaction --prefer-dist
+    displayName: 'Composer install'
+
+  - script: php artisan optimize:clear
+    displayName: 'Clear cache'
+
+  - script: php artisan migrate
+    displayName: 'Install migrations'
+
+  - script: php artisan db:seed
+    displayName: 'Run seeders'
+
+  - script: php artisan test --env=azure-pipelines
+    displayName: 'Tests'
