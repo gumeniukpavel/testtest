@@ -1,0 +1,36 @@
+version: "3.8"
+
+services:
+  api:
+    container_name: cargo-guru-production-api
+    restart: always
+    build:
+      context: ./../../
+      dockerfile: devops/common/prod/Dockerfile
+      args:
+        BUILD_COMMAND: build
+    ports:
+      - 4051:83
+    volumes:
+      - ./../../:/var/www/html
+    depends_on:
+      - redis
+  redis:
+    image: redis:6.0
+    container_name: cargo-guru-production-redis
+    restart: always
+    volumes:
+      - cargo_guru_production_volume:/data
+  swagger-ui:
+    image: swaggerapi/swagger-ui
+    container_name: cargo-guru-production-swagger-ui
+    ports:
+      - 6001:8080
+    volumes:
+      - ./../common/swagger:/app
+    environment:
+      - SWAGGER_JSON=/app/swagger.yaml
+
+volumes:
+  cargo_guru_production_volume:
+    driver: local

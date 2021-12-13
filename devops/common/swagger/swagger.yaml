@@ -1,0 +1,1169 @@
+openapi: 3.0.0
+info:
+  title: CargoGuru API
+  description: CargoGuru API
+  version: 1.0.0
+servers:
+  - url: https://api.pub.cargo.guru/api
+    description: Prod server API endpoints
+security:
+  - bearerAuth: [ ]
+paths:
+  /login:
+    post:
+      description: Запрос для авторизации в системе
+      security: [ ]
+      parameters:
+        - in: query
+          name: email
+          description: Почта
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: password
+          description: Пароль
+          schema:
+            type: string
+            minLength: 6
+            maxLength: 255
+          required: true
+      tags:
+        - Authentication
+      responses:
+        "200":
+          description: Авторизация успешна
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+  /logout:
+    post:
+      description: Запрос для выхода из системы
+      security: [ ]
+      tags:
+        - Authentication
+      responses:
+        "200":
+          description: Успешно
+        "403":
+          description: Доступ запрещён
+  /user/update/password:
+    post:
+      description: Запрос для изменения пароля
+      parameters:
+        - in: query
+          name: oldPassword
+          description: Старый пароль
+          schema:
+            type: string
+            minLength: 6
+            maxLength: 255
+            example: 'oldPassword'
+          required: true
+        - in: query
+          name: newPassword
+          description: Новый пароль
+          schema:
+            type: string
+            minLength: 6
+            maxLength: 255
+            example: 'newPassword'
+          required: true
+        - in: query
+          name: repeatPassword
+          description: Повтор нового пароля
+          schema:
+            type: string
+            minLength: 6
+            maxLength: 255
+            example: 'newPassword'
+          required: true
+      tags:
+        - User
+      responses:
+        "200":
+          description: Пароль изменён успешно
+        "500":
+          description: Пароли несовпадають или неправильный старый пароль
+  /search/city:
+    post:
+      description: Запрос для поиска города по названию
+      parameters:
+        - in: query
+          name: searchString
+          description: Поисковая строка
+          schema:
+            type: string
+            maxLength: 255
+            example: 'Москва'
+          required: true
+      tags:
+        - Search
+      responses:
+        "200":
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/City'
+        "400":
+          description: Ошибка валидации
+        "500":
+          description: Системная ошибка
+  /search/street:
+    post:
+      description: Запрос для поиска улицы по названию
+      parameters:
+        - in: query
+          name: cityId
+          description: ID города
+          schema:
+            type: integer
+            example: 1
+          required: true
+        - in: query
+          name: searchString
+          description: Поисковая строка
+          schema:
+            type: string
+            maxLength: 255
+            example: 'лен'
+          required: true
+      tags:
+        - Search
+      responses:
+        "200":
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Street'
+        "400":
+          description: Ошибка валидации
+        "500":
+          description: Системная ошибка
+
+  /companies/list:
+    post:
+      description: Запрос на получение списка компаний
+      parameters:
+        - in: query
+          name: page
+          description: Номер страницы
+          schema:
+            type: integer
+            minimum: 0
+            nullable: true
+            example: 1
+          required: false
+      tags:
+        - Companies
+      responses:
+        "200":
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  totalItems:
+                    type: integer
+                    example: 5
+                  totalPages:
+                    type: integer
+                    example: 1
+                  pageSize:
+                    type: integer
+                    example: 10
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CompaniesCache'
+  /company/options:
+    post:
+      description: Запрос на получение дополнительных опций компании
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    cargoFrom:
+                      description: ID города отправителя
+                      type: integer
+                      example: 1
+                    cargoTo:
+                      description: ID города получателя
+                      type: integer
+                      example: 1
+                    transportNumber:
+                      description: ID компании
+                      type: integer
+                      example: 32
+                    isArrivalByCourier:
+                      description: Забор курьером от адреса
+                      type: boolean
+                      example: false
+                    isDerivalByCourier:
+                      description: Доставка курьером до адреса
+                      type: boolean
+                      example: false
+                    lang:
+                      description: Язык
+                      type: string
+                      example: 'ru'
+                modifies:
+                  type: object
+                  properties:
+                    height:
+                      description: Высота
+                      type: number
+                      example: 0.1
+                    length:
+                      description: Длина
+                      type: number
+                      example: 0.1
+                    volume:
+                      description: Объем
+                      type: number
+                      example: 0.001
+                    weight:
+                      description: Вес
+                      type: number
+                      example: 1
+                    width:
+                      description: Ширина
+                      type: number
+                      example: 0.1
+        required: true
+      tags:
+        - Companies
+      responses:
+        "200":
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompaniesCacheOption'
+        "400":
+          description: Ошибка валидации
+        "500":
+          description: Системная ошибка
+  /company/paymentMethods:
+    post:
+      description: Запрос на получение дополнительных опций оплаты компании
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    cargoFrom:
+                      description: ID города отправителя
+                      type: integer
+                      example: 1
+                    cargoTo:
+                      description: ID города получателя
+                      type: integer
+                      example: 1
+                    transportNumber:
+                      description: ID компании
+                      type: integer
+                      example: 32
+                    isArrivalByCourier:
+                      description: Забор курьером от адреса
+                      type: boolean
+                      example: false
+                    isDerivalByCourier:
+                      description: Доставка курьером до адреса
+                      type: boolean
+                      example: false
+                    lang:
+                      description: Язык
+                      type: string
+                      example: 'ru'
+                modifies:
+                  type: object
+                  properties:
+                    height:
+                      description: Высота
+                      type: number
+                      example: 0.1
+                    length:
+                      description: Длина
+                      type: number
+                      example: 0.1
+                    volume:
+                      description: Объем
+                      type: number
+                      example: 0.001
+                    weight:
+                      description: Вес
+                      type: number
+                      example: 1
+                    width:
+                      description: Ширина
+                      type: number
+                      example: 0.1
+        required: true
+      tags:
+        - Companies
+      responses:
+        "200":
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompaniesCachePayment'
+        "400":
+          description: Ошибка валидации
+        "500":
+          description: Системная ошибка
+  /company/terminals:
+    post:
+      description: Запрос на получение списка терминалов
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    cityId:
+                      description: ID города
+                      type: integer
+                      example: 2
+                    transportNumber:
+                      description: ID компании
+                      type: integer
+                      example: 32
+                    isArrival:
+                      description: Терминалы на прием
+                      type: boolean
+                      example: true
+                    isDerival:
+                      description: Терминалы на выдачу
+                      type: boolean
+                      example: false
+                    lang:
+                      description: Язык
+                      type: string
+                      example: 'ru'
+                modifies:
+                  type: object
+                  properties:
+                    height:
+                      description: Высота
+                      type: number
+                      example: 0.1
+                    length:
+                      description: Длина
+                      type: number
+                      example: 0.1
+                    volume:
+                      description: Объем
+                      type: number
+                      example: 0.001
+                    weight:
+                      description: Вес
+                      type: number
+                      example: 1
+                    width:
+                      description: Ширина
+                      type: number
+                      example: 0.1
+        required: true
+      tags:
+        - Companies
+      responses:
+        "200":
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompaniesCacheTerminal'
+        "400":
+          description: Ошибка валидации
+        "500":
+          description: Системная ошибка
+
+  /getCalculation:
+    post:
+      description: Запрос на получение вычислений по перевозке
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                transportNumber:
+                  description: ID компании
+                  type: integer
+                  example: 32
+                  required: true
+                isDerivalByCourier:
+                  description: Забор курьером от адреса
+                  type: boolean
+                  example: false
+                  required: true
+                isArrivalByCourier:
+                  description: Доставка курьером до адреса
+                  type: boolean
+                  example: false
+                  required: true
+                paymentType:
+                  description: Тип оплаты
+                  type: integer
+                  example: 1
+                  required: true
+                payerType:
+                  description: Тип плательщика
+                  type: integer
+                  example: 1
+                  required: true
+                cargoFromStreet:
+                  description: ID улицы отправителя
+                  type: integer
+                  example: 1
+                  required: true
+                cargoToStreet:
+                  description: ID улицы получателя
+                  type: integer
+                  example: 2
+                  required: true
+                cityFrom:
+                  description: ID города отправителя
+                  type: integer
+                  example: 2
+                  required: true
+                cityTo:
+                  description: ID города получателя
+                  type: integer
+                  example: 4
+                  required: true
+                height:
+                  description: Высота
+                  type: number
+                  example: 0.1
+                  required: true
+                length:
+                  description: Длина
+                  type: number
+                  example: 0.1
+                  required: true
+                volume:
+                  description: Объем
+                  type: number
+                  example: 0.1
+                  required: true
+                weight:
+                  description: Вес
+                  type: number
+                  example: 0.1
+                  required: true
+                width:
+                  description: Ширина
+                  type: number
+                  example: 0.1
+                  required: true
+                currency:
+                  description: Валюта
+                  type: string
+                  example: 'RUB'
+                  required: true
+                language:
+                  description: Язык
+                  type: string
+                  example: 'ru'
+                  required: true
+                insurancePrice:
+                  description: Стоимость страховки
+                  type: integer
+                  example: 0
+                  required: true
+                options:
+                  type: object
+                  properties:
+                    derivalTerminalId:
+                      description: ID терминала для выдачи
+                      type: integer
+                      example: 36
+                      required: true
+                    arrivalTerminalId:
+                      description: ID терминала для получения
+                      type: integer
+                      example: 1
+                      required: true
+                    packageType:
+                      description: Тип упаковки
+                      type: array
+                      items:
+                        type: integer
+                      example: [ 2 ]
+                      required: true
+                places:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      cargoGoodsName:
+                        description: Наименование груза
+                        type: string
+                        example: ''
+                        required: true
+                      cargoWeight:
+                        description: Вес груза
+                        type: number
+                        example: 1
+                        required: true
+                      cargoVol:
+                        description: Объем груза
+                        type: number
+                        example: 0.001
+                        required: true
+                      cargoGoodsPrice:
+                        description: Оченочная стоимость
+                        type: integer
+                        example: 0
+                        required: true
+                      cargoLength:
+                        description: Длина груза
+                        type: number
+                        example: 0.1
+                        required: true
+                      cargoWidth:
+                        description: Ширина груза
+                        type: number
+                        example: 0.1
+                        required: true
+                      cargoHeight:
+                        description: Высота груза
+                        type: number
+                        example: 0.1
+                        required: true
+                      cargoDocument:
+                        description: Документ
+                        type: string
+                        example: ''
+                        required: true
+      tags:
+        - Calculation
+      responses:
+        "200":
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalculationCache'
+        "400":
+          description: Ошибка валидации
+        "500":
+          description: Системная ошибка
+  /calculationQueue/scheduleCalculation:
+    post:
+      description: Запрос на создание запланнированной отправки списка компаний и вычислений для перевозки на указанный URL
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                isDerivalByCourier:
+                  description: Забор курьером от адреса
+                  type: boolean
+                  example: false
+                  required: true
+                isArrivalByCourier:
+                  description: Доставка курьером до адреса
+                  type: boolean
+                  example: false
+                  required: true
+                paymentType:
+                  description: Тип оплаты
+                  type: integer
+                  example: 1
+                  required: true
+                payerType:
+                  description: Тип плательщика
+                  type: integer
+                  example: 1
+                  required: true
+                cityFrom:
+                  description: ID города отправителя
+                  type: integer
+                  example: 2
+                  required: true
+                cityTo:
+                  description: ID города получателя
+                  type: integer
+                  example: 4
+                  required: true
+                height:
+                  description: Высота
+                  type: number
+                  example: 0.1
+                  required: true
+                length:
+                  description: Длина
+                  type: number
+                  example: 0.1
+                  required: true
+                volume:
+                  description: Объем
+                  type: number
+                  example: 0.1
+                  required: true
+                weight:
+                  description: Вес
+                  type: number
+                  example: 0.1
+                  required: true
+                width:
+                  description: Ширина
+                  type: number
+                  example: 0.1
+                  required: true
+                currency:
+                  description: Валюта
+                  type: string
+                  example: 'RUB'
+                  required: true
+                language:
+                  description: Язык
+                  type: string
+                  example: 'ru'
+                  required: true
+                callbackUrl:
+                  description: URL для получение результата
+                  type: string
+                  example: 'https://api.pub.cargo.guru/api/calculationQueue/callback'
+                  required: true
+                insurancePrice:
+                  description: Стоимость страховки
+                  type: integer
+                  example: 0
+                  required: true
+                places:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      cargoGoodsName:
+                        description: Наименование груза
+                        type: string
+                        example: ''
+                        required: true
+                      cargoWeight:
+                        description: Вес груза
+                        type: number
+                        example: 1
+                        required: true
+                      cargoVol:
+                        description: Объем груза
+                        type: number
+                        example: 0.001
+                        required: true
+                      cargoGoodsPrice:
+                        description: Оченочная стоимость
+                        type: integer
+                        example: 0
+                        required: true
+                      cargoLength:
+                        description: Длина груза
+                        type: number
+                        example: 0.1
+                        required: true
+                      cargoWidth:
+                        description: Ширина груза
+                        type: number
+                        example: 0.1
+                        required: true
+                      cargoHeight:
+                        description: Высота груза
+                        type: number
+                        example: 0.1
+                        required: true
+                      cargoDocument:
+                        description: Документ
+                        type: string
+                        example: ''
+                        required: true
+      tags:
+        - Calculation
+      responses:
+        "200":
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScheduleCalculation'
+        "400":
+          description: Ошибка валидации
+        "500":
+          description: Системная ошибка
+  /calculationQueue/status:
+    post:
+      description: Запрос на получения статуса запланнированных вычислений
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                scheduleCalculationId:
+                  description: ИД запланнированных вычислений
+                  type: integer
+                  example: 1
+                  required: true
+      tags:
+        - Calculation
+      responses:
+        "200":
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScheduleCalculation'
+        "400":
+          description: Ошибка валидации
+        "500":
+          description: Системная ошибка
+
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: 'Name'
+        email:
+          type: string
+          example: 'test@email.com'
+        apiJWTToken:
+          type: string
+          example: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6MSwiZXhwIjoxNjMyNTc4NDg1fQ.sXVApRW51xPq_FGi9xSBhX5U-DT4z6QauU93fj6DYFU'
+        isHasAccessToApi:
+          type: boolean
+          example: true
+        endAccessToApiAt:
+          type: string
+          example: '2021-09-25'
+    Country:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: 'Russia'
+        shortName:
+          type: string
+          example: 'RU'
+    City:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: 'Москва'
+        shortName:
+          type: string
+          example: 'Москва'
+        region:
+          type: string
+          example: 'Москва'
+        country:
+          $ref: '#/components/schemas/Country'
+    Street:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: 'Ленинские Горы'
+        shortName:
+          type: string
+          example: 'Ленинские Горы'
+        city:
+          $ref: '#/components/schemas/City'
+    CompaniesCache:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        canOrderNow:
+          type: boolean
+          example: true
+        transportLang:
+          type: string
+          example: 'ru'
+        transportLogo:
+          type: string
+          example: 'http://www.some.site/some.pic'
+        transportName:
+          type: string
+          example: 'Name'
+        transportNumber:
+          type: integer
+          example: 32
+        transportSite:
+          type: string
+          example: 'http://www.some.site/'
+        companiesCacheNames:
+          type: array
+          items:
+            $ref: '#/components/schemas/CompaniesCacheName'
+    CompaniesCacheName:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: 'Name'
+        lang:
+          type: string
+          example: 'ru'
+    CompaniesCacheOption:
+      type: object
+      properties:
+        name:
+          type: string
+          example: 'Дополнительные опции'
+        visibleOrder:
+          type: integer
+          example: 12
+        aoptions:
+          type: object
+          properties:
+            addOptions:
+              type: object
+              properties:
+                0:
+                  type: object
+                  properties:
+                    displayName:
+                      type: string
+                      example: 'Упаковка'
+                    fieldName:
+                      type: string
+                      example: 'packageType'
+                    type:
+                      type: string
+                      example: 'multienum'
+                    visibleOrder:
+                      type: integer
+                      example: 12
+                    recalcTotalPrice:
+                      type: boolean
+                      example: true
+                    variants:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          number:
+                            type: integer
+                            example: 1
+                          visible:
+                            type: string
+                            example: 'Жесткая упаковка'
+                          makesInvisible:
+                            type: array
+                            items:
+                              type: string
+                              example: [ 'boxCountBlock', 'bagCountBlock' ]
+                          uid:
+                            type: string
+                            example: '0x838fc70baeb49b564426b45b1d216c15'
+                bagCountBlock:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      example: 'bagCountBlock'
+                    name:
+                      type: string
+                      example: 'bagCountBlock'
+                    displayName:
+                      type: string
+                      example: 'Количество мешков'
+                    fieldName:
+                      type: string
+                      example: 'bagCount'
+                    type:
+                      type: string
+                      example: 'int'
+                    visibleOrder:
+                      type: integer
+                      example: 13
+                    hidden:
+                      type: boolean
+                      example: true
+                    recalcTotalPrice:
+                      type: boolean
+                      example: true
+                    value:
+                      type: integer
+                      example: 1
+                boxCountBlock:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      example: 'boxCountBlock'
+                    name:
+                      type: string
+                      example: 'boxCountBlock'
+                    displayName:
+                      type: string
+                      example: 'Количество коробок'
+                    fieldName:
+                      type: string
+                      example: 'boxCount'
+                    type:
+                      type: string
+                      example: 'int'
+                    visibleOrder:
+                      type: integer
+                      example: 14
+                    hidden:
+                      type: boolean
+                      example: true
+                    recalcTotalPrice:
+                      type: boolean
+                      example: true
+                    value:
+                      type: integer
+                      example: 1
+    CompaniesCachePayment:
+      type: object
+      properties:
+        paymentTypes:
+          type: array
+          items:
+            type: object
+            properties:
+              number:
+                type: integer
+                example: 1
+              visible:
+                type: string
+                example: 'Банковская карта VISA, MasterCard, МИР'
+              description:
+                type: string
+                example: 'Скидка 1.00 % от стоимости доставки'
+        payerTypes:
+          type: array
+          items:
+            type: object
+            properties:
+              number:
+                type: integer
+                example: 1
+              visible:
+                type: string
+                example: 'Заказчик'
+              standard:
+                type: boolean
+                example: true
+    CompaniesCacheTerminal:
+      type: object
+      properties:
+        arrivalTerminalBlocks:
+          type: array
+          items:
+            type: object
+            properties:
+              number:
+                type: integer
+                example: 1
+              visible:
+                type: string
+                example: 'Санкт-Петербург Парнас (194292, Санкт-Петербург г, 1-й Верхний пер, дом № 12, Литера Б)'
+              longitude:
+                type: string
+                example: '30.381800'
+              latitude:
+                type: string
+                example: '60.063000'
+              maxWeight:
+                type: string
+                example: '2500.000'
+              maxHeight:
+                type: string
+                example: '2.300'
+              maxWidth:
+                type: string
+                example: '2.400'
+              maxLength:
+                type: string
+                example: '12.000'
+        derivalTerminalBlocks:
+          type: array
+          items:
+            type: object
+            properties:
+              number:
+                type: integer
+                example: 36
+              visible:
+                type: string
+                example: 'Москва Север (127411, Москва г, Лобненская ул, дом № 18, стр 2)'
+              longitude:
+                type: string
+                example: '37.519200'
+              latitude:
+                type: string
+                example: '55.896700'
+              maxWeight:
+                type: string
+                example: '3000.000'
+              maxHeight:
+                type: string
+                example: '2.400'
+              maxWidth:
+                type: string
+                example: '2.400'
+              maxLength:
+                type: string
+                example: '13.000'
+    CalculationCache:
+      type: object
+      properties:
+        cities:
+          type: object
+          properties:
+            derival:
+              type: object
+              properties:
+                ru:
+                  type: string
+                  example: 'Петерфельд'
+                en:
+                  type: string
+                  example: ''
+            arrival:
+              type: object
+              properties:
+                ru:
+                  type: string
+                  example: 'Москва'
+                en:
+                  type: string
+                  example: 'MOSCOW'
+        cityFrom:
+          type: string
+          example: 'Петерфельд'
+        cityTo:
+          type: string
+          example: 'Москва'
+        methods:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                example: 'Автотранспорт'
+              names:
+                type: object
+                properties:
+                  ru:
+                    type: string
+                    example: 'Автотранспорт'
+                  en:
+                    type: string
+                    example: 'MOTOR TRANSPORT'
+              intercity:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    description:
+                      type: string
+                      example: 'Петерфельд-Москва'
+                    price:
+                      type: integer
+                      example: 546
+                    prices:
+                      type: object
+                      properties:
+                        UAH:
+                          type: number
+                          example: 249.94
+                        USD:
+                          type: number
+                          example: 9.57
+                        RUB:
+                          type: number
+                          example: 546
+              additional:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    description:
+                      type: string
+                      example: 'Забор груза от терминала'
+                    price:
+                      type: integer
+                      example: 30
+                    prices:
+                      type: object
+                      properties:
+                        UAH:
+                          type: number
+                          example: 13.73
+                        USD:
+                          type: number
+                          example: 0.53
+                        RUB:
+                          type: number
+                          example: 30
+    ScheduleCalculation:
+      type: object
+      properties:
+        data:
+          type: string
+          example: '{request data}'
+        status:
+          type: string
+          example: 'Failed'
+        response:
+          type: string
+          example: '{response data}'
+        errorMessage:
+          type: string
+          example: '{error message}'
+
