@@ -1,0 +1,36 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+class AddColumnToUsersTable extends Migration
+{
+    /**
+     * Run the migrations.
+     *
+     * @return void
+     */
+    public function up()
+    {
+        Schema::table('users', function (Blueprint $table)
+        {
+            $table->boolean('is_has_access_to_api')->default(false)->after('password');
+            $table->date('end_access_to_api_at')->nullable()->after('password');
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     *
+     * @return void
+     */
+    public function down()
+    {
+        Schema::table('users', function (Blueprint $table)
+        {
+            $table->dropColumn('is_has_access_to_api');
+            $table->dropColumn('end_access_to_api_at');
+        });
+    }
+}

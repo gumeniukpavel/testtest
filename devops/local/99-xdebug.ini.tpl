@@ -1,0 +1,10 @@
+zend_extension=xdebug.so
+xdebug.remote_enable=true
+xdebug.remote_autostart=true
+xdebug.remote_handler=dbgp
+xdebug.remote_mode=req
+xdebug.remote_port=${REMOTE_DEBUG_PORT}
+xdebug.idekey=${REMOTE_DEBUG_IDE_KEY}
+xdebug.remote_connect_back=0
+xdebug.profiler_enable=0
+xdebug.remote_host=${REMOTE_DEBUG_HOST}
