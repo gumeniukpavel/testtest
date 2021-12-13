@@ -36,11 +36,11 @@ return [
     'mailers' => [
         'smtp' => [
             'transport' => 'smtp',
-            'host' => env('MAIL_HOST', 'email-smtp.eu-west-1.amazonaws.com'),
+            'host' => env('MAIL_HOST', ''),
             'port' => env('MAIL_PORT', 587),
-            'encryption' => env('MAIL_ENCRYPTION', 'tls'),
-            'username' => env('MAIL_USERNAME', 'AKIASKC7WX5VM6UFFH4O'),
-            'password' => env('MAIL_PASSWORD', 'BKuFhmRgq1R0Pgqyk9syxF9MKNi5F4lLcuct/r0DJZAF'),
+            'encryption' => env('MAIL_ENCRYPTION', ''),
+            'username' => env('MAIL_USERNAME', ''),
+            'password' => env('MAIL_PASSWORD', ''),
             'timeout' => null,
             'auth_mode' => null,
         ],
